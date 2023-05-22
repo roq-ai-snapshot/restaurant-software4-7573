@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model menu_items {
+  id            String        @id @db.Uuid
+  name          String        @db.VarChar(255)
+  description   String
+  price         Int
+  image_url     String?       @db.VarChar(255)
+  restaurant_id String?       @db.Uuid
+  restaurants   restaurants?  @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_items   order_items[]
+}
+
+model notifications {
+  id         String   @id @db.Uuid
+  user_id    String?  @db.Uuid
+  message    String
+  read       Boolean  @default(false)
+  created_at DateTime @db.Timestamp(6)
+  users      users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model order_items {
+  id           String      @id @db.Uuid
+  order_id     String?     @db.Uuid
+  menu_item_id String?     @db.Uuid
+  quantity     Int
+  menu_items   menu_items? @relation(fields: [menu_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  orders       orders?     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model orders {
+  id               String        @id @db.Uuid
+  status           String        @db.VarChar(255)
+  special_requests String?
+  customer_id      String?       @db.Uuid
+  restaurant_id    String?       @db.Uuid
+  created_at       DateTime      @db.Timestamp(6)
+  updated_at       DateTime      @db.Timestamp(6)
+  order_items      order_items[]
+  users            users?        @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurants      restaurants?  @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model reservations {
+  id            String       @id @db.Uuid
+  date          DateTime     @db.Date
+  time          DateTime     @db.Time(6)
+  party_size    Int
+  customer_id   String?      @db.Uuid
+  restaurant_id String?      @db.Uuid
+  users         users?       @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurants   restaurants? @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model restaurants {
+  id              String         @id @db.Uuid
+  name            String         @db.VarChar(255)
+  location        String         @db.VarChar(255)
+  contact_details String         @db.VarChar(255)
+  operating_hours String         @db.VarChar(255)
+  owner_id        String?        @db.Uuid
+  menu_items      menu_items[]
+  orders          orders[]
+  reservations    reservations[]
+  users           users?         @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staff           staff[]
+}
+
+model staff {
+  id            String       @id @db.Uuid
+  user_id       String?      @db.Uuid
+  restaurant_id String?      @db.Uuid
+  role          String       @db.VarChar(255)
+  restaurants   restaurants? @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id            String          @id @db.Uuid
+  role          String          @db.VarChar(255)
+  name          String          @db.VarChar(255)
+  email         String          @unique @db.VarChar(255)
+  password      String          @db.VarChar(255)
+  notifications notifications[]
+  orders        orders[]
+  reservations  reservations[]
+  restaurants   restaurants[]
+  staff         staff[]
+}
